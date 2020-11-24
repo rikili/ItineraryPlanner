@@ -35,13 +35,13 @@ const AddAttForm = ({ data, onSubmit, type }) => {
             >
                 <Form.Item
                     label='Name'
-                    name='name'
+                    name='Name'
                 >
-                    <Input />
+                    <Input disabled={type==='modify' ? true : false}/>
                 </Form.Item>
                 <Form.Item
                     label='Location'
-                    name='location'
+                    name='Location'
                 >
                     <Input />
                 </Form.Item>

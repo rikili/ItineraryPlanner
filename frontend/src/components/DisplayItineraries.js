@@ -4,24 +4,24 @@ import { Table } from 'antd';
 
 const columns = [
     {
-        title: 'Name',
-        dataIndex: 'name'
+        title: '# of People',
+        dataIndex: 'Number_of_People'
     },
     {
         title: 'Location',
-        dataIndex: 'loc'
+        dataIndex: 'Destination'
     },
     {
         title: 'Start-Date',
-        dataIndex: 'startDate'
+        dataIndex: 'StartDate'
     },
     {
         title: 'End-Date',
-        dataIndex: 'endDate'
+        dataIndex: 'EndDate'
     },
     {
         title: 'Approx. Cost',
-        dataIndex: 'estimatedCost'
+        dataIndex: 'Estimated_Cost'
     }
 ]
 
@@ -33,11 +33,12 @@ const DisplayItineraries = (props) => {
             <Table 
                 dataSource={props.data} 
                 columns={columns} 
+                pagination={false}
                 rowSelection={
                     {
                         type: "radio",
                         onSelect: (rec) => {
-                            props.changeSelected(rec.key);
+                            props.changeSelected(rec.TripID);
                         }
                     }
                 }

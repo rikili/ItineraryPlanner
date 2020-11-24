@@ -1,90 +1,169 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Table, Button, Row } from 'antd';
-import AddRentalForm from './AddRentalForm'
-import { v4 as uuidv4 } from 'uuid';
+import AddRentalForm from './AddRentalForm';
+import { Modbutton, Modbutton2 } from './Bookings';
+const axios = require('axios');
 
 const tempData = [
     {
         key: 1,
-        type: 'tennis racket',
-        rentalCost: 10
+        EquipmentType: 'tennis racket',
+        rentalRate: 10
     },
     {
         key: 2,
-        type: 'basketball',
-        rentalCost: 5
+        EquipmentType: 'basketball',
+        rentalRate: 5
+    }
+]
+
+const columnsAgg = [
+    {
+        title: 'Rental Cost',
+        dataIndex: 'rentalRate'
+    },
+    {
+        title: 'Count',
+        dataIndex: 'Count'
     }
 ]
 
 const columns = [
     {
         title: 'Type',
-        dataIndex: 'type'
+        dataIndex: 'EquipmentType'
     },
     {
         title: 'Rental Cost',
-        dataIndex: 'rentalCost'
+        dataIndex: 'rentalRate'
     }
 ]
 
-const submitHandlerAdd = (res, data, setData) => {
-    // send add request
-    res['key'] = uuidv4();
-    setData([...data,res]);
-}
-
-const submitHandlerModify = (res, data, selected, setData) => {
-    // send modify request
-    const temp = data.map((item) => {
-        if (item.key === selected){
-            return {
-                key: item.key,
-                type: res['type'],
-                rentalCost: res['rentalCost']
-            };
-        }
-        return item;
+const processResponse  = (res) => {
+    return res.map((item, index) => {
+        return {...item, key: index};
     });
-    setData(temp);
 }
 
-const deleteRental = (selected, data, setData) => {
-    // send delete request
-    console.log(selected);
-    const temp = data.filter((item) => {
-        return !(item.key === selected);
-    });
-    setData(temp);
-}
 
-const Rentals = () => {
+const Rentals = (props) => {
     const [formRental, setFormRental] = useState('');
-    const [selected, setSelected] = useState('');
+    const [selected, setSelected] = useState(null);
     const [data, setData] = useState(tempData);
+    const [rentalAgg, setRentalAgg] = useState(false);
+    const [aggData, setAggData] = useState([]);
     let rental = null;
 
-    // get data from request
+
+    useEffect(() => {
+        const get = async () => {
+            try {
+                const rentalData = await axios.get('http://localhost:3005/get/rentals?TripID=' + props.tripID);
+                setData(processResponse(rentalData.data));
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        get();
+    }, [setData, props.tripID]);
+
+
+    const submitHandlerModify = async (res, data, selected, setData) => {
+        try{
+            const result = await axios.post('http://localhost:3005/update/rentals', 
+            {
+                ...res,
+                RentalID: data[selected].RentalID,
+                TripID: props.tripID
+            });
+            setData(processResponse(result.data));
+        } catch (e) {
+            console.log(e.stack);
+        }
+    }
+
+    const submitHandlerAdd = async (res, setData, tripID) => {
+        try{
+            const result = await axios.post('http://localhost:3005/add/rentals', 
+            {
+                ...res, 
+                TripID: tripID
+            });
+            setData(processResponse(result.data));
+        } catch (e) {
+            console.log(e.stack);
+        }
+    }
+    
+    
+    const deleteRental = async (selected, data, setData) => {
+        try {
+            const result = await axios.post('http://localhost:3005/delete/rentals', {
+                TripID: props.tripID,
+                RentalID: data[selected].RentalID
+            });
+            setData(processResponse(result.data));
+        } catch (e) {
+            console.log(e.stack);
+        }
+    }
+
+    const displayRentalHandler = async () => {
+        setRentalAgg(false);
+        try {
+            const rentalData = await axios.get('http://localhost:3005/get/rentals?TripID=' + props.tripID);
+            setData(processResponse(rentalData.data));
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    const displayAggHandler = async () => {
+        setRentalAgg(true);
+        try {
+            const rentalData = await axios.get('http://localhost:3005/get/rentalRateGreater?TripID=' + props.tripID);
+            console.log(rentalData);
+            setAggData(processResponse(rentalData.data));
+        } catch (e) {
+            console.error(e);
+        }
+    }
 
     if (formRental === 'add') {
-        rental = <AddRentalForm data={null} type={formRental} onSubmit={(e)=>{submitHandlerAdd(e, data, setData)}}/>
+        rental = <AddRentalForm data={null} type={formRental} onSubmit={(e)=>{submitHandlerAdd(e, setData, props.tripID)}}/>
     } else if (formRental === 'modify') {
         rental = <AddRentalForm data={data[selected]} type={formRental} onSubmit={(e)=>{submitHandlerModify(e, data, selected, setData)}}/>
     }
 
+    const rentTable = <Table pagination={false} columns = {columns} dataSource={data} rowSelection={
+        {
+            type: "radio",
+            onSelect: (rec) => {
+                setSelected(rec.key);
+            }
+        }
+    }/>
+
+    const aggTable = <Table pagination={false} columns={columnsAgg} dataSource={aggData} />
+
+    const modLogic = () => {
+        if (selected === null) {
+            return true;
+        } else {
+            return rentalAgg;
+        }
+    }
+
     return (
         <div>
-            <Table columns = {columns} dataSource={data} rowSelection={
-                    {
-                        type: "radio",
-                        onSelect: (rec) => {
-                            setSelected(rec.key);
-                        }
-                    }
-                }/>
+            { rentalAgg ? aggTable : rentTable }
             <Row>
-                <Button onClick={()=>{setFormRental('add')}}>Add</Button>
-                <Button onClick={()=>{setFormRental('modify')}} disabled={isNaN(selected)}>Modify</Button>
-                <Button onClick={()=>{deleteRental(selected, data, setData)}}>Delete</Button>
+                {/* <Button onClick={()=>{setFormRental('add')}}>Add</Button> */}
+                <Modbutton disabled={modLogic()} onClick={()=>{setFormRental('modify')}}>Modify</Modbutton>
+                <Modbutton disabled={rentalAgg} onClick={()=>{deleteRental(selected, data, setData)}}>Delete</Modbutton>
+                <Modbutton2 disabled={rentalAgg} onClick={()=>displayAggHandler()}>Cost Groups</Modbutton2>
+                <Modbutton disabled={!rentalAgg} onClick={()=>displayRentalHandler()}>Rentals</Modbutton>
             </Row>
             { rental }
         </div>

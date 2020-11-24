@@ -9,28 +9,7 @@ import Rentals from './components/Rentals';
 import Transport from './components/Transport';
 import LoginForm from './components/LoginForm';
 const axios = require('axios');
-
-
 const { Sider } = Layout;
-
-const state = [
-    {
-        key: 1,
-        name: "potato",
-        loc: "tomato",
-        startDate: "asdb123",
-        endDate: "zxb123",
-        estimatedCost: 123421
-    },
-    {
-        key: 2,
-        name: "pineapple",
-        loc: "zxcv",
-        startDate: "asdb123",
-        endDate: "zxb123",
-        estimatedCost: 124123
-    }
-];
 
 const MenuButton = styled(Button)`
     width: 100%;
@@ -55,30 +34,15 @@ const TextLabel = styled.p`
 `
 
 const checkSelect = (selected, cb) => {
-    if (isNaN(selected)) {
+    if (selected === null) {
         message.error("Please select an Itinerary first", 1.5)
     } else {
         cb(true);
     }
 }
 
-const handleOk = (selected, setFn) => {
-    setFn(false);
-}
-
-const handleCancel = (setFn) => {
-    setFn(false);
-}
-
-const handleAdd = (data, res) => {
-    data.push(res); // parse out only the itinerary data and add that to itinerary data
-    // 
-    console.log(data);
-}
-
-
 function App() { // TODO: props holds user data
-    const [selected, setSelected] = useState(NaN);
+    const [selected, setSelected] = useState(null);
     const [addVisible, setAdd] = useState(false);
     const [bookingVisible, setBooking] = useState(false);
     const [rentalsVisible, setRentals] = useState(false);
@@ -86,17 +50,84 @@ function App() { // TODO: props holds user data
     const [username, setUsername] = useState('');
     const [data, setData] = useState([]);
 
-    const checkUsername = async (username) => {
+    const handleClose = (setFn) => {
+        setFn(false);
+    }
+    
+    const checkUsername = async(username) => {
         try {
-            const result = state;
-            // const result = await axios.get('localhost:4000/checkUser/' + username);
-            setData([...result]);
+            // const result = state;
+            const result = await axios.get('http://localhost:3005/get/checkUsername?Username=' + username);
             setUsername(username);
+            if (result.data.result === true) {
+                const update = await axios.get('http://localhost:3005/get/UserItinerary?Username=' + username)
+                console.log(update);
+                updateData(update);
+                message.success("Logged In As: " + username);
+            } else {
+                message.error("Invalid Login", 1.5);
+            }
         } catch (error) {
-            console.log("problemo -- checkUsername")
-            message.error("Invalid Login", 1.5)
+            console.log("problemo -- checkUsername");
+            message.error("Invalid Login", 1.5);
+        }
+    }
+
+    const handleAdd = async (res) => {
+        const ret = {...res, Username: username};
+        try {
+            await axios.post('http://localhost:3005/add/itinerary', ret);
+            const result = await axios.get('http://localhost:3005/get/UserItinerary?Username=' + username);
+            updateData(result);
+        } catch (e) {
+            console.log(e.stack);
+            message.info(e);
+        }
+        message.info("Added: " + res.Destination);
+    }
+
+    const handleDelete = async () => {
+        let result = [];
+        // const location = data[selected].Destination;
+        try {
+            result = await axios.post('http://localhost:3005/delete/itinerary', {
+                TripID: selected,
+                Username: username
+            });
+        } catch (e) {
+            console.log(e.stack);
+            message.info(e);
+        }
+        updateData(result);
+        message.info("Trip Deleted");
+    }
+
+    const updateData = (result) => {
+        const genKey = (arr) => {
+            return arr.map((item, index) => {
+                return {...item, key: index};
+            });
+        }
+    
+        const update = async () => {
+            try{
+                setData(genKey(result.data));
+            } catch (e) {
+                console.log('problemo -- updateData');
+            }
         }
 
+        update();
+    }
+
+    const callAllAtt = async () => {
+        try {
+            const result = await axios.get('http://localhost:3005/get/allAttractions');
+            const res = result.data[0].Count;
+            message.info("Itineraries that contain every destination: " + res, 3);
+        } catch (e) {
+            console.log("Problem allAttractions call")
+        }
     }
 
     return (
@@ -111,10 +142,10 @@ function App() { // TODO: props holds user data
                 </MenuButton>
                 <Modal
                     visible={addVisible}
-                    onOk={()=>handleOk(selected, setAdd)}
-                    onCancel={()=>handleCancel(setAdd)}
+                    onOk={()=>handleClose(setAdd)}
+                    onCancel={()=>handleClose(setAdd)}
                 >
-                    <AddItineraryForm add={(inp)=>handleAdd([], inp)}/>
+                    <AddItineraryForm add={(inp)=>handleAdd(inp)}/>
                 </Modal>
                 <Spacer>
                     <MenuLabel>Manage:</MenuLabel>
@@ -123,8 +154,8 @@ function App() { // TODO: props holds user data
                     <Modal
                         title='Manage Accommodations & Attractions'
                         visible={bookingVisible}
-                        onOk={()=>handleOk(selected, setBooking)}
-                        onCancel={()=>handleCancel(setBooking)}
+                        onOk={()=>handleClose(setBooking)}
+                        onCancel={()=>handleClose(setBooking)}
                         width={'95%'}
                     >
                         <Bookings tripID={selected}/>
@@ -134,8 +165,8 @@ function App() { // TODO: props holds user data
                         getContainer={false}
                         title='Manage Rentals'
                         visible={rentalsVisible}
-                        onOk={()=>handleOk(selected, setRentals)}
-                        onCancel={()=>handleCancel(setRentals)}
+                        onOk={()=>handleClose(setRentals)}
+                        onCancel={()=>handleClose(setRentals)}
                         width={'95%'}
                     >
                         <Rentals tripID={selected}/>
@@ -144,26 +175,26 @@ function App() { // TODO: props holds user data
                     <Modal
                         title='Manage Transportation'
                         visible={transportVisible}
-                        onOk={()=>handleOk(selected, setTransport)}
-                        onCancel={()=>handleCancel(setTransport)}
+                        onOk={()=>handleClose(setTransport)}
+                        onCancel={()=>handleClose(setTransport)}
                         width={'95%'}
                     >
                         <Transport tripID={selected}/>
                     </Modal>
                     <Spacer/>
                     <MenuLabel>View:</MenuLabel>
-                    <MenuButtonLower type='primary'>Tours</MenuButtonLower>
-                    <MenuButtonLower type='primary'>Other Itineraries</MenuButtonLower>
+                    <MenuButtonLower onClick={()=>callAllAtt()} type='primary'>Div Stats</MenuButtonLower>
+                    {/* <MenuButtonLower type='primary'>Other Itineraries</MenuButtonLower> */}
                 </Spacer>
                 <Spacer>
-                    <Button type='primary' danger>Delete Itinerary</Button>
+                    <Button type='primary' danger onClick={handleDelete}>Delete Itinerary</Button>
                 </Spacer>
                 <Spacer>
                     <LoginForm onSubmit={checkUsername}/>
                 </Spacer>
             </Sider>
             <Layout className='test'>
-                <div>Hello: {username}</div>
+                <div>{data.length === 0 ?  "" : "Hello: " + username}</div>
                 <DisplayItineraries changeSelected={setSelected} data={data}/>
             </Layout>
         </Layout>

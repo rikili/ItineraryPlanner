@@ -13,7 +13,7 @@ const tailLayout = {
     },
 };
 
-const AddRentalForm = ({data, type, onSubmit}) => {
+const AddTransitForm = ({data, type, onSubmit}) => {
     // const [form] = Form.useForm();
 
     // if (data !== null) {
@@ -23,18 +23,24 @@ const AddRentalForm = ({data, type, onSubmit}) => {
     return (
         <Form
             {...layout}
-            name='rental'
+            name='transit'
             onFinish={(e)=>onSubmit(e)}
         >
             <Form.Item
                 label='Type'
-                name='EquipmentType'
+                name='Type'
             >
-                <Input style={{width: '60%'}}/>
+                <Input style={{width: '60%'}}  disabled={type==='modify' ? true : false}/>
             </Form.Item>
             <Form.Item
-                label='Rental Cost'
-                name='rentalRate'
+                label='Lines'
+                name='Lines'
+            >
+                <Input style={{width: '60%'}}  disabled={type==='modify' ? true : false}/>
+            </Form.Item>
+            <Form.Item
+                label='Ticket Cost'
+                name='Ticket_Cost'
             >
                 <InputNumber min={0}/>
             </Form.Item>
@@ -45,4 +51,4 @@ const AddRentalForm = ({data, type, onSubmit}) => {
     )
 }
 
-export default AddRentalForm;
+export default AddTransitForm;

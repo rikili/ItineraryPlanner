@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Form, Input, InputNumber, Button } from 'antd';
+import { Form, Input, InputNumber, Button, DatePicker } from 'antd';
 import styled from 'styled-components';
 
 const layout = {
@@ -35,7 +35,7 @@ const AddAccForm = ({ data, onSubmit, type }) => {
             >
                 <Form.Item
                     label='Address'
-                    name='addr'
+                    name='Address'
                 >
                     <Input disabled={type==='modify' ? true : false}/>
                 </Form.Item>
@@ -43,31 +43,31 @@ const AddAccForm = ({ data, onSubmit, type }) => {
                     label='Room Number'
                     name='RoomNum'
                 >
-                    <Input disabled={type==='modify' ? true : false}/>
+                    <InputNumber disabled={type==='modify' ? true : false}/>
                 </Form.Item>
                 <Form.Item
                     label='Type'
-                    name='type'
+                    name='Type'
                 >
-                    <Input />
+                    <Input disabled={type==='modify' ? true : false}/>
                 </Form.Item>
                 <Form.Item
                     label='Daily Cost'
-                    name='dailycost'
+                    name='Daily_Cost'
                 >
                     <InputNumber min={0} />
                 </Form.Item>
                 <Form.Item
                     label='Check-In Time'
-                    name='checkinTime'
+                    name='CheckIn_Time'
                 >
-                    <Input />
+                    <DatePicker />
                 </Form.Item>
                 <Form.Item
                     label='Check-Out Time'
-                    name='checkoutTime'
+                    name='CheckOut_Time'
                 >
-                    <Input />
+                    <DatePicker />
                 </Form.Item>
                 <Form.Item {...tailLayout}>
                     <Button type="primary" htmlType="submit">{type === 'add' ? 'Add' : 'Modify'}</Button>

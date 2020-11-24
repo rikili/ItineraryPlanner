@@ -1,5 +1,5 @@
 import React from 'react';
-import { Form, Input, Button, InputNumber } from 'antd';
+import { Form, Input, Button, InputNumber, DatePicker } from 'antd';
 
 const layout = {
     labelCol: { span: 4 },
@@ -13,40 +13,46 @@ const tailLayout = {
     },
 };
 
+const formatRet = (res, add) => {
+    res.StartDate = res.StartDate.year().toString() + '-' + res.StartDate.month().toString() + '-' + res.StartDate.date().toString();
+    res.EndDate = res.EndDate.year().toString() + '-' + res.EndDate.month().toString() + '-' + res.EndDate.date().toString();
+    add(res);
+}
+
 const AddItineraryForm = ({add}) => {
     return (
         <Form
             {...layout}
             name='acc'
-            onFinish={(e) => add(e)}
+            onFinish={(e) => formatRet(e, add)}
         >
             <Form.Item
-                label='Name'
-                name='name'
+                label='# of People'
+                name='Number_of_People'
             >
-                <Input />
+                 <InputNumber min={0}/>
             </Form.Item>
             <Form.Item
                 label='Location'
-                name='location'
+                name='Destination'
             >
                 <Input />
             </Form.Item>
             <Form.Item
                 label='Start-Date'
-                name='startDate'
+                name='StartDate'
             >
-                <Input />
+                <DatePicker />
             </Form.Item>
             <Form.Item
                 label='End-Date'
-                name='endDate'
+                name='EndDate'
             >
-                <Input />
+                <DatePicker />
             </Form.Item>
             <Form.Item
                 label='Est. Cost'
-                name='estimatedCost'
+                name='Estimated_Cost'
             >
                 <InputNumber min={0}/>
             </Form.Item>

@@ -39,7 +39,7 @@ const LoginForm = ({onSubmit}) => {
                     label={<Label>Pass: </Label>}
                     name='password'
                 >
-                    <Input/>
+                    <Input.Password visibilityToggle={false}/>
                 </Form.Item>
                 <Form.Item {...tailLayout}>
                     <Button type="primary" htmlType="submit">Login</Button>
